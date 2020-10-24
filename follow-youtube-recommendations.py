@@ -84,16 +84,22 @@ class YoutubeFollower():
         headers = {}
         if self._language:
             headers["Accept-Language"] = self._language
+            headers["User-Agent"] = "Mozilla/5.0 (Compatible: )"
         url_request = urllib2.Request(url, headers=headers)
         html = urllib2.urlopen(url_request)
-        soup = BeautifulSoup(html, "lxml")
-
+        value = "HTML"+html.read()
         videos = []
-        for item_section in soup.findAll('div', {'class': 'yt-lockup-dismissable'}):
-            video = item_section.contents[0].contents[0]['href'].split('=')[1]
-            videos.append(video)
+        #No more beautifulsoup it is js generated
+        videomatches = re.findall("\{\"videoRenderer\"\:\{\"videoId\":\"[^\"]{1,12}\"", value)
+        for video in videomatches:
+            match = re.match('.*videoId\"\:\"(.*)\"', video)
+            if match is not None:
+                video = match.group(1)
+                print(video)
+                videos.append(video)
 
         self._search_infos[search_terms] = videos
+        print('found %s' % (len(videos),) )
         return videos[0:max_results]
 
     def get_recommendations(self, video_id, nb_recos_wanted, depth, key):
